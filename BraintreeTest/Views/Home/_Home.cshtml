@@ -1,0 +1,35 @@
+﻿<!-- ko with: home -->
+<div class="row">
+  <div class="col-md-12">
+
+    <div id="dropin-container"></div>
+    <button id="submit-button">Request payment method</button>
+
+  </div>
+</div>
+
+<!-- /ko -->
+@section Scripts {
+
+  <script src="https://js.braintreegateway.com/web/3.39.0/js/client.min.js"></script>
+
+  <script>
+    //braintree.client.create(/* ... */);
+  </script>
+
+  <script>
+    var button = document.querySelector('#submit-button');
+
+    braintree.dropin.create({
+      authorization: 'CLIENT_TOKEN_FROM_SERVER',
+      container: '#dropin-container'
+    }, function (createErr, instance) {
+      button.addEventListener('click', function () {
+        instance.requestPaymentMethod(function (err, payload) {
+          // Submit payload.nonce to your server
+        });
+      });
+    });
+  </script>
+
+}

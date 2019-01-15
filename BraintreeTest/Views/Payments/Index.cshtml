@@ -1,0 +1,183 @@
+﻿@{
+  Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="wrapper">
+  <div class="checkout container">
+    <header>
+      <h1>Hi, <br>Let's test a transaction</h1>
+      <p>
+        Make a test payment with Braintree using PayPal or a card
+      </p>
+    </header>
+    <form action="/Payments/Create" id="payment-form" method="post">
+
+      <span class="input-label">Company Name</span>
+      <div class="input-wrapper company-wrapper">
+        <input id="company" name="company" type="text" placeholder="Company Name" value="Ignia">
+      </div>
+
+      <span class="input-label">Invoice Number</span>
+      <div class="input-wrapper invoice-wrapper">
+        <input id="invoice" name="invoice" type="text" placeholder="Invoice Number" value="123456789">
+      </div>
+
+      <span class="input-label">Amount</span>
+      <div class="input-wrapper amount-wrapper">
+        <input id="amount" name="amount" type="tel" min="1" placeholder="Amount" value="10">
+      </div>
+
+      <label for="card-number">Card Number</label>
+      <div id="card-number"></div>
+
+      <label for="cvv">CVV</label>
+      <div id="cvv"></div>
+
+      <!--
+        <label for="expiration-date">Expiration Date</label>
+        <div id="expiration-date"></div>
+  -->
+
+      <label for="expiration-month">Expiration Month</label>
+      <div id="expiration-month"></div>
+      <label for="expiration-year">Expiration Year</label>
+      <div id="expiration-year"></div>
+
+      <label for="postal-code">ZIP / Postal Code</label>
+      <div id="postal-code"></div>
+
+      <input id="nonce" name="payment_method_nonce" type="hidden" />
+
+      <input type="submit" value="Pay" disabled />
+    </form>
+
+    <!--
+    <form id="payment-form" method="post" action="/Payments/Create">
+      <section>
+        <label for="amount">
+          <span class="input-label">Amount</span>
+          <div class="input-wrapper amount-wrapper">
+            <input id="amount" name="amount" type="tel" min="1" placeholder="Amount" value="10">
+          </div>
+        </label>
+        <div class="bt-drop-in-wrapper">
+          <div id="bt-dropin"></div>
+        </div>
+      </section>
+      <input id="nonce" name="payment_method_nonce" type="hidden" />
+      <button class="button" type="submit"><span>Test Transaction</span></button>
+    </form>
+    -->
+
+  </div>
+</div>
+<!-- script src="https://js.braintreegateway.com/web/dropin/1.13.0/js/dropin.min.js"></script -->
+
+<script src="https://js.braintreegateway.com/web/3.39.0/js/client.min.js"></script>
+<script src="https://js.braintreegateway.com/web/3.39.0/js/hosted-fields.min.js"></script>
+<script>
+    var client_token = "@ViewBag.ClientToken";
+    var form = document.querySelector('#payment-form');
+  var submit = document.querySelector('input[type="submit"]');
+
+
+  var clientInstance = braintree.client.create({
+    authorization: client_token
+  }, function (clientErr, clientInstance) {
+    if (clientErr) {
+      console.error(clientErr);
+      return;
+    }
+
+    // This example shows Hosted Fields, but you can also use this
+    // client instance to create additional components here, such as
+    // PayPal or Data Collector.
+
+    braintree.hostedFields.create({
+      client: clientInstance,
+      styles: {
+        'input': {
+          'font-size': '14px'
+        },
+        'input.invalid': {
+          'color': 'red'
+        },
+        'input.valid': {
+          'color': 'green'
+        }
+      },
+      fields: {
+        number: {
+          selector: '#card-number',
+          placeholder: '4111 1111 1111 1111'
+        },
+        cvv: {
+          selector: '#cvv',
+          placeholder: '123'
+        },
+        expirationMonth: {
+          selector: '#expiration-month',
+          placeholder: '01'
+        },
+        expirationYear: {
+          selector: '#expiration-year',
+          placeholder: '2021'
+        },
+        postalCode: {
+          selector: '#postal-code',
+          placeholder: '12345'
+        }
+      }
+    }, function (hostedFieldsErr, hostedFieldsInstance) {
+      if (hostedFieldsErr) {
+        console.error(hostedFieldsErr);
+        return;
+      }
+
+      submit.removeAttribute('disabled');
+
+      form.addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        hostedFieldsInstance.tokenize(function (tokenizeErr, payload) {
+          if (tokenizeErr) {
+            console.error(tokenizeErr);
+            return;
+          }
+
+          // If this was a real integration, this is where you would
+          // send the nonce to your server.
+          console.log('Got a nonce: ' + payload.nonce);
+          document.querySelector('#nonce').value = payload.nonce;
+          form.submit();
+        });
+      }, false);
+    });
+  });
+
+   /*
+    braintree.dropin.create({
+        authorization: client_token,
+        container: '#bt-dropin',
+        paypal: {
+            flow: 'vault'
+        }
+    }, function (createErr, instance) {
+        form.addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            instance.requestPaymentMethod(function (err, payload) {
+                if (err) {
+                    console.log('Error', err);
+                    return;
+                }
+
+                // Add the nonce to the form and submit
+                document.querySelector('#nonce').value = payload.nonce;
+                form.submit();
+            });
+        });
+    });
+    */
+</script>
+<!-- script src="/App_Themes/javascript/demo.js"></script -->
